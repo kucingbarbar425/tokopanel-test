@@ -1,22 +1,22 @@
 // Pricing configuration for custom RAM and CPU selection
 export const pricingConfig = {
-  basePrice: 5000, // Base price for panel
+  basePrice: 0, // Base price for panel
   
   ram: {
     // RAM in GB to MB conversion
     // Price per GB per month
-    pricePerGB: 2000,
-    minGB: 0.5,
+    pricePerGB: 1000,
+    minGB: 1,
     maxGB: 16,
     step: 0.5,
   },
   
   cpu: {
     // Price per 10% CPU allocation
-    pricePerPercent: 100,
-    minPercent: 10,
+    pricePerPercent: 1000,
+    minPercent: 40,
     maxPercent: 400,
-    step: 10,
+    step: 20,
   },
   
   disk: {
