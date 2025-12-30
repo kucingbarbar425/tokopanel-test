@@ -5,7 +5,7 @@ export const pricingConfig = {
   ram: {
     // RAM in GB to MB conversion
     // Price per GB per month
-    pricePerGB: 1000,
+    pricePerGB: 10,
     minGB: 1,
     maxGB: 16,
     step: 0.5,
@@ -13,7 +13,7 @@ export const pricingConfig = {
   
   cpu: {
     // Price per 1% CPU allocation
-    pricePerPercent: 25,
+    pricePerPercent: 2,
     minPercent: 10,
     maxPercent: 400,
     step: 10,
