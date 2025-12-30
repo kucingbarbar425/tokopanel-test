@@ -12,7 +12,11 @@ type PanelData = {
   memory: number
   disk: number
   cpu: number
-  planId: string
+  planId?: string
+  customSpecs?: {
+    ramGB: number
+    cpuPercent: number
+  }
   createdAt: string
 }
 
