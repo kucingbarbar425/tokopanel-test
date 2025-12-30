@@ -16,7 +16,11 @@ export interface PaymentData {
   _id?: ObjectId
   transactionId: string
   vpediaId: string
-  planId: string
+  planId?: string
+  customSpecs?: {
+    ramGB: number
+    cpuPercent: number
+  }
   username: string
   email: string
   amount: number
@@ -28,13 +32,46 @@ export interface PaymentData {
   createdAt: string
 }
 
-export async function createPayment(planId: string, username: string, email: string) {
+export async function createPayment(
+  paymentInput: 
+    | string 
+    | { type: "custom"; ramGB: number; cpuPercent: number; username: string; email: string },
+  username?: string,
+  email?: string,
+) {
   try {
-    const plan = plans.find((p) => p.id === planId)
-    if (!plan) throw new Error("Plan tidak ditemukan")
+    let planId: string | undefined
+    let customSpecs: { ramGB: number; cpuPercent: number } | undefined
+    let finalUsername: string
+    let finalEmail: string
+    let finalPrice: number
 
-    const internalFee = calculateFee(plan.price)
-    const nominal = plan.price + internalFee
+    // Handle both old and new function signatures
+    if (typeof paymentInput === "string") {
+      // Old signature: createPayment(planId, username, email)
+      planId = paymentInput
+      finalUsername = username!
+      finalEmail = email!
+
+      const plan = plans.find((p) => p.id === planId)
+      if (!plan) throw new Error("Plan tidak ditemukan")
+      finalPrice = plan.price
+    } else {
+      // New signature: createPayment({ type: "custom", ramGB, cpuPercent, username, email })
+      if (paymentInput.type !== "custom") throw new Error("Tipe pembayaran tidak dikenal")
+      
+      const { calculateCustomPrice } = await import("@/data/pricing")
+      customSpecs = {
+        ramGB: paymentInput.ramGB,
+        cpuPercent: paymentInput.cpuPercent,
+      }
+      finalUsername = paymentInput.username
+      finalEmail = paymentInput.email
+      finalPrice = calculateCustomPrice(customSpecs.ramGB, customSpecs.cpuPercent)
+    }
+
+    const internalFee = calculateFee(finalPrice)
+    const nominal = finalPrice + internalFee
 
     const transactionId = generateTransactionId()
     const method = "QRIS2"
@@ -44,19 +81,23 @@ export async function createPayment(planId: string, username: string, email: str
       .update(SAKURU_API_ID + method + transactionId + nominal)
       .digest("hex")
 
+    const productName = customSpecs 
+      ? `Panel Bot Custom (${customSpecs.ramGB}GB RAM, ${customSpecs.cpuPercent}% CPU)`
+      : plans.find((p) => p.id === planId)?.name || "Panel Bot"
+
     const bodyData = new URLSearchParams()
     bodyData.append("api_id", SAKURU_API_ID)
     bodyData.append("method", method)
-    bodyData.append("name", username)
-    bodyData.append("email", email)
+    bodyData.append("name", finalUsername)
+    bodyData.append("email", finalEmail)
     bodyData.append("phone", "6280000000000") 
     bodyData.append("amount", nominal.toString())
     bodyData.append("merchant_fee", "1")
     bodyData.append("merchant_ref", transactionId)
     bodyData.append("expired", "24")
-    bodyData.append("produk[]", plan.name)
+    bodyData.append("produk[]", productName)
     bodyData.append("qty[]", "1")
-    bodyData.append("harga[]", plan.price.toString())
+    bodyData.append("harga[]", finalPrice.toString())
     bodyData.append("callback_url", "https://panelshopv3.mts4you.biz.id/callback") 
     bodyData.append("return_url", "https://panelshopv3.mts4you.biz.id/invoice")
     bodyData.append("signature", signature)
@@ -89,8 +130,9 @@ export async function createPayment(planId: string, username: string, email: str
       transactionId,
       vpediaId: pay.trx_id,
       planId,
-      username,
-      email,
+      customSpecs,
+      username: finalUsername,
+      email: finalEmail,
       amount: nominal,
       fee: internalFee,
       total: nominal,

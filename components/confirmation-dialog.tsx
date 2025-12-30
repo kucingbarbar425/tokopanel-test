@@ -10,20 +10,35 @@ import {
 } from "@/components/ui/dialog"
 import { formatRupiah } from "@/lib/utils"
 import { plans } from "@/data/plans"
+import { calculateCustomPrice } from "@/data/pricing"
 import { Loader2 } from "lucide-react"
 
 interface ConfirmationDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  planId: string
+  planId?: string
+  customSpecs?: {
+    ramGB: number
+    cpuPercent: number
+  }
   onConfirm: () => void
   isLoading: boolean
 }
 
-export function ConfirmationDialog({ open, onOpenChange, planId, onConfirm, isLoading }: ConfirmationDialogProps) {
-  const plan = plans.find((p) => p.id === planId)
-
-  if (!plan) return null
+export function ConfirmationDialog({ 
+  open, 
+  onOpenChange, 
+  planId, 
+  customSpecs,
+  onConfirm, 
+  isLoading 
+}: ConfirmationDialogProps) {
+  const plan = planId ? plans.find((p) => p.id === planId) : null
+  const isCustom = customSpecs !== undefined
+  const title = isCustom ? "Paket Custom" : plan?.name || "Paket"
+  const price = isCustom && customSpecs 
+    ? calculateCustomPrice(customSpecs.ramGB, customSpecs.cpuPercent)
+    : plan?.price || 0
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -31,21 +46,34 @@ export function ConfirmationDialog({ open, onOpenChange, planId, onConfirm, isLo
         <DialogHeader>
           <DialogTitle className="text-xl text-red-400">Konfirmasi Pembelian</DialogTitle>
           <DialogDescription className="text-gray-400">
-            Anda akan membeli paket <span className="font-semibold text-white">{plan.name}</span>
+            Anda akan membeli paket <span className="font-semibold text-white">{title}</span>
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="bg-dark-500 p-4 rounded-lg border border-dark-300">
             <h3 className="font-medium text-white mb-2">Detail Paket</h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="text-gray-400">RAM:</div>
-              <div className="font-medium text-white">{plan.memory} MB</div>
-              <div className="text-gray-400">Disk:</div>
-              <div className="font-medium text-white">{plan.disk} MB</div>
-              <div className="text-gray-400">CPU:</div>
-              <div className="font-medium text-white">{plan.cpu}%</div>
-              <div className="text-gray-400">Harga:</div>
-              <div className="font-medium text-red-400">{formatRupiah(plan.price)}</div>
+              {isCustom && customSpecs ? (
+                <>
+                  <div className="text-gray-400">RAM:</div>
+                  <div className="font-medium text-white">{customSpecs.ramGB} GB</div>
+                  <div className="text-gray-400">CPU:</div>
+                  <div className="font-medium text-white">{customSpecs.cpuPercent}%</div>
+                  <div className="text-gray-400">Harga:</div>
+                  <div className="font-medium text-red-400">{formatRupiah(price)}</div>
+                </>
+              ) : plan ? (
+                <>
+                  <div className="text-gray-400">RAM:</div>
+                  <div className="font-medium text-white">{plan.memory} MB</div>
+                  <div className="text-gray-400">Disk:</div>
+                  <div className="font-medium text-white">{plan.disk} MB</div>
+                  <div className="text-gray-400">CPU:</div>
+                  <div className="font-medium text-white">{plan.cpu}%</div>
+                  <div className="text-gray-400">Harga:</div>
+                  <div className="font-medium text-red-400">{formatRupiah(plan.price)}</div>
+                </>
+              ) : null}
             </div>
           </div>
           <p className="text-sm text-gray-400">

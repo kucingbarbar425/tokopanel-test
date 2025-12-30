@@ -8,7 +8,11 @@ import { Clock, CheckCircle, AlertTriangle, Loader2, User, Mail, Package, Calend
 
 interface InvoiceDetailsProps {
   transactionId: string
-  planId: string
+  planId?: string
+  customSpecs?: {
+    ramGB: number
+    cpuPercent: number
+  }
   username: string
   email: string
   amount: number
@@ -21,6 +25,7 @@ interface InvoiceDetailsProps {
 export function InvoiceDetails({
   transactionId,
   planId,
+  customSpecs,
   username,
   email,
   amount,
@@ -29,7 +34,8 @@ export function InvoiceDetails({
   createdAt,
   status,
 }: InvoiceDetailsProps) {
-  const plan = plans.find((p) => p.id === planId)
+  const plan = planId ? plans.find((p) => p.id === planId) : null
+  const isCustom = customSpecs !== undefined
 
   const getStatusBadge = () => {
     switch (status) {
@@ -146,12 +152,27 @@ export function InvoiceDetails({
               </div>
               <div className="flex-1">
                 <p className="text-sm text-gray-400">Paket</p>
-                <p className="font-medium text-white text-lg">{plan?.name || "Paket"}</p>
+                <p className="font-medium text-white text-lg">
+                  {isCustom && customSpecs 
+                    ? `Paket Custom (${customSpecs.ramGB}GB RAM, ${customSpecs.cpuPercent}% CPU)`
+                    : plan?.name || "Paket"}
+                </p>
               </div>
             </div>
 
             <div className="bg-dark-500 p-4 rounded-lg border border-dark-300">
-              {plan ? (
+              {isCustom && customSpecs ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-400">RAM</p>
+                    <p className="font-medium text-white">{customSpecs.ramGB} GB</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400">CPU</p>
+                    <p className="font-medium text-white">{customSpecs.cpuPercent}%</p>
+                  </div>
+                </div>
+              ) : plan ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                   <div>
                     <p className="text-gray-400">RAM</p>

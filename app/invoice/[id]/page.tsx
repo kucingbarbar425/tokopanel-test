@@ -34,6 +34,7 @@ export default async function InvoicePage({ params }: { params: { id: string } }
             <InvoiceDetails
               transactionId={payment.transactionId}
               planId={payment.planId}
+              customSpecs={payment.customSpecs}
               username={payment.username}
               email={payment.email}
               amount={payment.amount}
