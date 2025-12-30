@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { createPayment } from "@/app/actions/create-payment"
 import { checkUserExists } from "@/app/actions/check-user-exists"
-import { plans } from "@/data/plans"
 import { calculateCustomPrice, pricingConfig, validateSpecs } from "@/data/pricing"
 import { formatRupiah } from "@/lib/utils"
 import { Check, Info, User, Mail, Package, Loader2, HardDrive, Zap } from "lucide-react"
@@ -265,36 +264,7 @@ export default function PanelForm() {
             </div>
           </motion.div>
 
-          {/* Legacy Plans Section - Optional */}
-          <div className="pt-4 border-t border-dark-300">
-            <p className="text-xs text-gray-500 mb-3">Atau pilih dari paket preset kami:</p>
-            <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
-              {plans.slice(0, 4).map((plan) => (
-                <motion.div
-                  key={plan.id}
-                  onClick={() => {
-                    setCustomRamGB(plan.memory / 1024)
-                    setCustomCpuPercent(plan.cpu)
-                  }}
-                  layout
-                  className="relative rounded-lg border-2 cursor-pointer transition-all duration-300 p-3 text-sm bg-dark-500 border-dark-300 hover:border-red-500/50"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="font-medium text-white">{plan.name}</div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    {plan.memory / 1024}GB RAM
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {plan.cpu}% CPU
-                  </div>
-                  <div className="text-red-400 text-xs font-bold mt-1">
-                    {formatRupiah(plan.price)}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
+
         </div>
       </form>
 
