@@ -56,20 +56,43 @@ export async function checkPaymentStatus(transactionId: string) {
     if (status === "berhasil") {
       await updatePaymentStatus(transactionId, "paid")
 
-      const plan = plans.find((p) => p.id === payment.planId)
-      if (!plan) return { success: false, error: "Plan tidak ditemukan" }
+      let panelResult
+      
+      if (payment.customSpecs) {
+        // Custom specs - calculate price from customSpecs
+        const { calculateCustomPrice } = await import("@/data/pricing")
+        const customPrice = calculateCustomPrice(payment.customSpecs.ramGB, payment.customSpecs.cpuPercent)
+        const planName = `Panel Bot Custom (${payment.customSpecs.ramGB}GB RAM, ${payment.customSpecs.cpuPercent}% CPU)`
+        
+        panelResult = await createPanel({
+          username: payment.username,
+          email: payment.email,
+          memory: Math.round(payment.customSpecs.ramGB * 1024),
+          disk: Math.round(payment.customSpecs.ramGB * 1024),
+          cpu: payment.customSpecs.cpuPercent,
+          createdAt: payment.createdAt,
+          price: customPrice,
+          planName: planName,
+          transactionId,
+        })
+      } else if (payment.planId) {
+        // Preset plan
+        const plan = plans.find((p) => p.id === payment.planId)
+        if (!plan) return { success: false, error: "Plan tidak ditemukan" }
 
-      const panelResult = await createPanel({
-        username: payment.username,
-        email: payment.email,
-        memory: plan.memory,
-        disk: plan.disk,
-        cpu: plan.cpu,
-        planId: payment.planId,
-        createdAt: payment.createdAt,
-        panelType: payment.panelType,
-        transactionId,
-      })
+        panelResult = await createPanel({
+          username: payment.username,
+          email: payment.email,
+          memory: plan.memory,
+          disk: plan.disk,
+          cpu: plan.cpu,
+          planId: payment.planId,
+          createdAt: payment.createdAt,
+          transactionId,
+        })
+      } else {
+        return { success: false, error: "Tipe paket tidak valid" }
+      }
 
       if (!panelResult.success) {
         await updatePaymentStatus(transactionId, "failed")

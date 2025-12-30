@@ -18,6 +18,9 @@ type PanelData = {
     cpuPercent: number
   }
   createdAt: string
+  price?: number
+  planName?: string
+  transactionId?: string
 }
 
 export async function createPanel(data: PanelData) {
@@ -50,15 +53,26 @@ export async function createPanel(data: PanelData) {
     const serverId = serverResponse.attributes.id
     console.log(`Server created successfully with ID: ${serverId}`)
 
-    const plan = plans.find((p) => p.id === planId)
-    if (!plan) {
-      throw new Error("Plan tidak ditemukan")
+    // Get plan info - either from planId or from custom specs
+    let planName = "Custom Panel"
+    let planPrice = 0
+    
+    if (planId) {
+      const plan = plans.find((p) => p.id === planId)
+      if (!plan) {
+        throw new Error("Plan tidak ditemukan")
+      }
+      planName = plan.name
+      planPrice = plan.price
+    } else if (data.planName) {
+      planName = data.planName
+      planPrice = data.price || 0
     }
 
     console.log(`Starting notification process for user ${username}...`)
 
     console.log(`Sending email notification to ${email}...`)
-    sendPanelDetailsEmail(email, username, password, serverId, plan.name)
+    sendPanelDetailsEmail(email, username, password, serverId, planName)
       .then((result) => {
         if (result.success) {
           console.log(`Email notification sent successfully to ${email}`)
@@ -71,7 +85,7 @@ export async function createPanel(data: PanelData) {
       })
 
     console.log(`Sending Telegram notification for user ${userId}...`)
-    sendTelegramNotification(userId, createdAt, plan.price, plan.name, email)
+    sendTelegramNotification(userId, createdAt, planPrice, planName, email)
       .then((result) => {
         if (result.success) {
           console.log(`Telegram notification sent successfully for user ${userId}`)
