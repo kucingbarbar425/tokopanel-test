@@ -13,10 +13,10 @@ export const pricingConfig = {
   
   cpu: {
     // Price per 10% CPU allocation
-    pricePerPercent: 1000,
-    minPercent: 40,
+    pricePerPercent: 50,
+    minPercent: 10,
     maxPercent: 400,
-    step: 20,
+    step: 10,
   },
   
   disk: {
