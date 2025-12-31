@@ -210,7 +210,7 @@ export default function GaransiPage() {
                 )}
 
                 {dialogType === "expired" && (
-                  <Button onClick={() => router.push("/plans")} className="w-full sm:w-auto bg-red-600 hover:bg-red-700">
+                  <Button onClick={() => router.push("/")} className="w-full sm:w-auto bg-red-600 hover:bg-red-700">
                     Beli Lagi
                   </Button>
                 )}
