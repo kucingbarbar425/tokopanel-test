@@ -54,23 +54,6 @@ export default function GaransiDetailPage() {
         return
       }
 
-      // Cek masa garansi dan batas penggantian
-      const purchaseDate = new Date(trx.createdAt)
-      const now = new Date()
-      const diffDays = Math.floor((now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24))
-      const remainingDays = appConfig.garansi.warrantyDays - diffDays
-      const remainingReplace = appConfig.garansi.replaceLimit - (trx.replaceUsed || 0)
-
-      if (remainingDays <= 0 || remainingReplace <= 0) {
-        toast({
-          title: "Garansi tidak tersedia",
-          description: "Masa garansi atau batas klaim sudah habis.",
-          variant: "destructive",
-        })
-        router.push("/garansi")
-        return
-      }
-
       setTransaction(trx)
       setLoading(false)
     }
