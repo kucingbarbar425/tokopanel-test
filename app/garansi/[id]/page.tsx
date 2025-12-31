@@ -104,11 +104,13 @@ export default function GaransiDetailPage() {
       return setError("Email tidak sesuai dengan transaksi ini.")
     }
 
-    // ✅ Ambil data plan dari daftar plans
-    const plan = plans.find((p) => p.id === transaction.planId)
-    if (!plan) {
-      return setError("Plan tidak ditemukan, hubungi admin.")
-    }
+    // Ambil data plan: prioritas ke data pada transaksi jika tersedia, lalu fallback ke daftar `plans`
+    const planFromList = plans.find((p) => p.id === transaction.planId)
+    const memory = transaction.memory ?? planFromList?.memory ?? 1024
+    const disk = transaction.disk ?? planFromList?.disk ?? 10240
+    const cpu = transaction.cpu ?? planFromList?.cpu ?? 0
+    const planNameToUse = transaction.planName ?? planFromList?.name ?? "Custom Panel"
+    const priceToUse = transaction.total ?? planFromList?.price ?? 0
 
     // Cek apakah user/email sudah ada di panel
     const check = await checkUserExists(transaction.username, email)
@@ -119,14 +121,17 @@ export default function GaransiDetailPage() {
       return
     }
 
-    // ✅ Gunakan data dari plan, bukan dari transaksi
+    // Buat panel menggunakan data yang telah dipilih (transaction > plans)
     const panel = await createPanel({
       username: transaction.username,
       email: email,
-      memory: plan.memory,
-      disk: plan.disk,
-      cpu: plan.cpu,
+      memory,
+      disk,
+      cpu,
       planId: transaction.planId,
+      planName: planNameToUse,
+      price: priceToUse,
+      transactionId: transactionId,
       createdAt: transaction.createdAt,
     })
 
