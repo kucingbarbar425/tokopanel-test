@@ -71,13 +71,7 @@ export async function updateTransactionReplace(id: string) {
     const trx = await paymentsCollection.findOne({ transactionId: id })
     if (!trx) return null
 
-    const currentReplace = trx.replaceUsed || 0
-    const newReplaceUsed = currentReplace + 1
-
-    const replaceLimit = appConfig.garansi.replaceLimit || 0
-    if (newReplaceUsed > replaceLimit) {
-      return { success: false, error: "Replace limit exceeded", replaceUsed: currentReplace }
-    }
+    const newReplaceUsed = (trx.replaceUsed || 0) + 1
 
     await paymentsCollection.updateOne(
       { transactionId: id },
