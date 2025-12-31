@@ -4,6 +4,39 @@ import clientPromise from "@/lib/mongodb"
 import { appConfig } from "@/data/config"
 import { plans } from "@/data/plans"
 
+function normalizeKey(s: any) {
+  if (!s) return ""
+  return String(s).toLowerCase().trim().replace(/[\s,._-]+/g, "")
+}
+
+function findPlanForTransaction(transaction: any) {
+  const planId = transaction?.planId ? normalizeKey(transaction.planId) : ""
+  const planName = transaction?.planName ? normalizeKey(transaction.planName) : ""
+
+  // Try exact id match first
+  let plan = plans.find((p) => normalizeKey(p.id) === planId)
+  if (plan) return plan
+
+  // Try match by normalized name
+  if (planName) {
+    plan = plans.find((p) => normalizeKey(p.name) === planName)
+    if (plan) return plan
+  }
+
+  // Try partial contains match on id or name
+  if (planId) {
+    plan = plans.find((p) => normalizeKey(p.id).includes(planId) || normalizeKey(p.name).includes(planId))
+    if (plan) return plan
+  }
+
+  if (planName) {
+    plan = plans.find((p) => normalizeKey(p.name).includes(planName) || normalizeKey(p.id).includes(planName))
+    if (plan) return plan
+  }
+
+  return undefined
+}
+
 export async function getSuccessfulTransactions() {
   try {
     const client = await clientPromise
@@ -13,13 +46,13 @@ export async function getSuccessfulTransactions() {
     const transactions = await paymentsCollection.find({}).sort({ createdAt: -1 }).limit(50).toArray()
 
     return transactions.map((transaction) => {
-      const plan = plans.find((p) => p.id === transaction.planId)
+      const plan = findPlanForTransaction(transaction)
 
       return {
         transactionId: transaction.transactionId,
         email: maskEmail(transaction.email),
         planId: transaction.planId,
-        planName: plan ? plan.name : "Unknown Plan",
+        planName: transaction.planName || (plan ? plan.name : "Unknown Plan"),
         total: transaction.total,
         createdAt: transaction.createdAt,
         status: transaction.status,
@@ -50,11 +83,11 @@ export async function getTransactionById(transactionId: string) {
       transaction.replaceUsed = 0
     }
 
-    const plan = plans.find((p) => p.id === transaction.planId)
+    const plan = findPlanForTransaction(transaction)
 
     return {
       ...transaction,
-      planName: plan ? plan.name : "Unknown Plan",
+      planName: transaction.planName || (plan ? plan.name : "Unknown Plan"),
     }
   } catch (error) {
     console.error("Error getting transaction by ID:", error)

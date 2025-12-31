@@ -61,6 +61,36 @@ export default function GaransiDetailPage() {
     fetchData()
   }, [transactionId, router, toast])
 
+  function normalizeKey(s: any) {
+    if (!s) return ""
+    return String(s).toLowerCase().trim().replace(/[\s,._-]+/g, "")
+  }
+
+  function findPlanForTransaction(transaction: any) {
+    const planId = transaction?.planId ? normalizeKey(transaction.planId) : ""
+    const planName = transaction?.planName ? normalizeKey(transaction.planName) : ""
+
+    let plan = plans.find((p) => normalizeKey(p.id) === planId)
+    if (plan) return plan
+
+    if (planName) {
+      plan = plans.find((p) => normalizeKey(p.name) === planName)
+      if (plan) return plan
+    }
+
+    if (planId) {
+      plan = plans.find((p) => normalizeKey(p.id).includes(planId) || normalizeKey(p.name).includes(planId))
+      if (plan) return plan
+    }
+
+    if (planName) {
+      plan = plans.find((p) => normalizeKey(p.name).includes(planName) || normalizeKey(p.id).includes(planName))
+      if (plan) return plan
+    }
+
+    return undefined
+  }
+
   const maskEmail = (email: string) => {
     const [name, domain] = email.split("@")
     return name.slice(0, 2) + "****@" + domain
@@ -88,7 +118,7 @@ export default function GaransiDetailPage() {
     }
 
     // Ambil data plan: prioritas ke data pada transaksi jika tersedia, lalu fallback ke daftar `plans`
-    const planFromList = plans.find((p) => p.id === transaction.planId)
+    const planFromList = findPlanForTransaction(transaction)
     const memory = transaction.memory ?? planFromList?.memory ?? 1024
     const disk = transaction.disk ?? planFromList?.disk ?? 10240
     const cpu = transaction.cpu ?? planFromList?.cpu ?? 0

@@ -62,6 +62,36 @@ export default function HistoryPage() {
           // Load all transactions from database
           const updatedTransactions: TransactionHistory[] = []
           
+          function normalizeKey(s: any) {
+            if (!s) return ""
+            return String(s).toLowerCase().trim().replace(/[\s,._-]+/g, "")
+          }
+
+          function findPlanForTransaction(transaction: any) {
+            const planId = transaction?.planId ? normalizeKey(transaction.planId) : ""
+            const planName = transaction?.planName ? normalizeKey(transaction.planName) : ""
+
+            let plan = plans.find((p) => normalizeKey(p.id) === planId)
+            if (plan) return plan
+
+            if (planName) {
+              plan = plans.find((p) => normalizeKey(p.name) === planName)
+              if (plan) return plan
+            }
+
+            if (planId) {
+              plan = plans.find((p) => normalizeKey(p.id).includes(planId) || normalizeKey(p.name).includes(planId))
+              if (plan) return plan
+            }
+
+            if (planName) {
+              plan = plans.find((p) => normalizeKey(p.name).includes(planName) || normalizeKey(p.id).includes(planName))
+              if (plan) return plan
+            }
+
+            return undefined
+          }
+
           for (const transaction of history) {
             try {
               const dbTransaction = await getTransactionById(transaction.transactionId)
@@ -83,7 +113,7 @@ export default function HistoryPage() {
               } else {
                 // If not found in DB, use local data and try to fix plan name
                 if (!transaction.planName || transaction.planName === "Unknown" || transaction.planName === "Unknown Plan") {
-                  const plan = plans.find((p) => p.id === transaction.planId)
+                  const plan = findPlanForTransaction(transaction)
                   if (plan) {
                     transaction.planName = plan.name
                   }
@@ -94,7 +124,7 @@ export default function HistoryPage() {
               console.error(`Error loading transaction ${transaction.transactionId}:`, error)
               // Use local data as fallback
               if (!transaction.planName || transaction.planName === "Unknown" || transaction.planName === "Unknown Plan") {
-                const plan = plans.find((p) => p.id === transaction.planId)
+                const plan = findPlanForTransaction(transaction)
                 if (plan) {
                   transaction.planName = plan.name
                 }

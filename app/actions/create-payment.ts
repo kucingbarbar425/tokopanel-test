@@ -17,6 +17,7 @@ export interface PaymentData {
   transactionId: string
   vpediaId: string
   planId?: string
+  planName?: string
   customSpecs?: {
     ramGB: number
     cpuPercent: number
@@ -126,10 +127,13 @@ export async function createPayment(
     }
 
     const pay = json.data[0]
+    const plan = planId ? plans.find((p) => p.id === planId) : undefined
+
     const paymentData: PaymentData = {
       transactionId,
       vpediaId: pay.trx_id,
       planId,
+      planName: plan ? plan.name : undefined,
       customSpecs,
       username: finalUsername,
       email: finalEmail,
