@@ -82,7 +82,7 @@ export default function GaransiPage() {
 
       setGaransiData({
         planName: transaction.planName,
-        amount: transaction.amount,
+        amount: transaction.total || transaction.amount,
         remainingDays,
         remainingReplace,
         createdAt: purchaseDate.toLocaleDateString(),
